@@ -5,10 +5,38 @@
 #include <string>
 #include <algorithm>
 #include <cassert>
+#include <fstream>
+
+std::string read_fasta(std::string filepath) {
+	std::ifstream file(filepath);
+	std::string full_seq = "";
+	std::string current_line;
+
+	// check if file actually freakin opened
+	if (!file.is_open()) {
+		std::cerr << "Critical Error: could not open file: " << filepath << std::endl;
+		return "";
+	}
+
+	// read the file
+	while (std::getline(file, current_line)) {
+		if (current_line.empty() || current_line[0] == '>'){
+			continue;
+		}
+
+		full_seq += current_line;
+	}
+
+	file.close();
+	return full_seq;
+
+}
+
+
+
 
 int smith_waterman_alg(std::string seq1, std::string seq2) {
-	//std::string seq1 = "GTCCGATGCTAGCTAGCTAGCATCGATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGATGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGA";
-	//std::string seq2 = "TTGACGTAAAGCTAGCTAGCATCGATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGATGCCATTGTAATGGGCCGCTGAAAGGGTTAAAGAT";
+
 	int max_i = 0; 
 	int max_j = 0; 
 
@@ -82,6 +110,23 @@ int smith_waterman_alg(std::string seq1, std::string seq2) {
 
 }
 int main() {
+
+	// HERE is where you would add the FASTA filepaths to analyze. Make sure to have the FASTA files in the same directory as the executable or provide the correct relative/absolute path.
+	//std::string << wild_type = read_fasta("insert wild type DNA filepath here");
+	//std::string << variant = read_fasta("insert variant or DNA of interest filepath here");
+
+	std::cout << "\nAttempting to load sequences from FASTA files..." << std::endl;
+	std::string wild_type = read_fasta("wild_type.fasta");
+	std::string variant = read_fasta("variant.fasta");
+
+	if (wild_type.length() > 0 && variant.length() > 0) {
+		int file_score = smith_waterman_alg(wild_type, variant);
+		std::cout << "--- Test 4 Passed: File IO Successful ---" << std::endl;
+	}
+	else {
+		std::cout << "--- Test 4 Skipped: Files not found ---" << std::endl;
+	}
+
 	assert(smith_waterman_alg("CGTGAATTCG", "ACTGAATTCC") == 22);
 	std::cout << "Baseline Sequence test passed successfully!" << std::endl;
 
@@ -91,8 +136,8 @@ int main() {
 	assert(smith_waterman_alg("AAAA", "TTTT") == 0);
 	std::cout << "Zero Floor test passed successfully!" << std::endl;
 
-	std::string wild_type = "GTCCGATGCTAGCTAGCTAGCATCGATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGATGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGA";
-	std::string variant = "TTGACGTAAAGCTAGCTAGCATCGATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGATGCCATTGTAATGGGCCGCTGAAAGGGTTAAAGAT";
+	//std::string wild_type = "GTCCGATGCTAGCTAGCTAGCATCGATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGATGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGA";
+	//std::string variant = "TTGACGTAAAGCTAGCTAGCATCGATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGATGCCATTGTAATGGGCCGCTGAAAGGGTTAAAGAT";
 
 	int stress_score = smith_waterman_alg(wild_type, variant);
 	std::cout << "massive memory leak test passed. Score: " << stress_score << std::endl; 
