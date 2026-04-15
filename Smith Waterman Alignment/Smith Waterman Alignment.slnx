@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="Smith Waterman Alignment.vcxproj" />
+  <Project Path="Smith Waterman Alignment.vcxproj" Id="fd1eeeac-a9e4-4276-b122-ec82c9713f1d" />
 </Solution>
