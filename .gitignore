@@ -35,3 +35,17 @@ x86/
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# Visual Studio / C++ Junk
+.vs/
+x64/
+Debug/
+Release/
+*.exe
+*.obj
+*.pdb
+*.sln
+
+# Python / Streamlit Junk
+__pycache__/
+*.pyc

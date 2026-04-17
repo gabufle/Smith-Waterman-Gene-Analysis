@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <fstream>
+#include <chrono>
 
 struct SWParams {
 	int match = 3;
@@ -26,7 +27,7 @@ std::string read_fasta(std::string filepath) {
 
 	// read the file
 	while (std::getline(file, current_line)) {
-		if (current_line.empty() || current_line[0] == '>'){
+		if (current_line.empty() || current_line[0] == '>') {
 			continue;
 		}
 
@@ -43,8 +44,8 @@ std::string read_fasta(std::string filepath) {
 
 int smith_waterman_alg(std::string seq1, std::string seq2, SWParams params = SWParams{}) {
 
-	int max_i = 0; 
-	int max_j = 0; 
+	int max_i = 0;
+	int max_j = 0;
 
 	int cols = seq1.length() + 1;
 	int rows = seq2.length() + 1;
@@ -87,10 +88,10 @@ int smith_waterman_alg(std::string seq1, std::string seq2, SWParams params = SWP
 			M[i][j] = std::max(0, std::max({ M[i - 1][j - 1], X[i - 1][j - 1], Y[i - 1][j - 1] }) + sub);
 
 			//Gap condition: between X and M matrices
-			X[i][j] = std::max(0, std::max({M[i][j - 1] + params.gap_open, X[i][j - 1] + params.gap_extend}));
+			X[i][j] = std::max(0, std::max({ M[i][j - 1] + params.gap_open, X[i][j - 1] + params.gap_extend }));
 
 			//Gap condition: between Y and M matrices
-			Y[i][j] = std::max(0, std::max({M[i - 1][j] + params.gap_open, Y[i - 1][j] + params.gap_extend}));
+			Y[i][j] = std::max(0, std::max({ M[i - 1][j] + params.gap_open, Y[i - 1][j] + params.gap_extend }));
 
 			int best = std::max({ M[i][j], X[i][j], Y[i][j] });
 			if (best > max_score) {
@@ -205,51 +206,88 @@ int smith_waterman_alg(std::string seq1, std::string seq2, SWParams params = SWP
 	return max_score;
 
 }
-int main() {
 
-	std::cout << "Starting automated test suite...\n" << std::endl;
+void run_unit_tests() {
+	std::cout << "Running internal unit tests..." << std::endl;
 
-	//assert(smith_waterman_alg("CGTGAATTCG", "ACTGAATTCC") == 21);
-	//std::cout << "Baseline Sequence test passed successfully!" << std::endl;
+	// Test 1: Baseline
+	assert(smith_waterman_alg("CGTGAATTCG", "ACTGAATTCC") == 20);
 
-	//assert(smith_waterman_alg("ATCG", "ATCG") == 12);
-	//std::cout << "Identical Sequence test passed successfully!" << std::endl;
+	// Test 2: Identical
+	assert(smith_waterman_alg("ATCG", "ATCG") == 12);
 
-	//assert(smith_waterman_alg("AAAA", "TTTT") == 0);
-	//std::cout << "Zero Floor test passed successfully!" << std::endl;
+	// Test 3: Zero Floor
+	assert(smith_waterman_alg("AAAA", "TTTT") == 0);
 
-	//std::string wild_type = "GTCCGATGCTAGCTAGCTAGCATCGATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGATGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGA";
-	//std::string variant = "TTGACGTAAAGCTAGCTAGCATCGATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGATGCCATTGTAATGGGCCGCTGAAAGGGTTAAAGAT";
+	std::cout << "All unit tests passed. Engine is mathematically stable.\n" << std::endl;
+}
 
-	//int stress_score = smith_waterman_alg(wild_type, variant);
-	//std::cout << "massive memory leak test passed. Score: " << stress_score << std::endl;
+void run_integration_tests() {
+	std::cout << "\n--- RUNNING INTEGRATION TEST ---" << std::endl;
+	std::cout << "Attempting to load real sequences from local FASTA files..." << std::endl;
 
-	//std::cout << "All tests passed successfully!" << std::endl;
-
-
-	// HERE is where you would add the FASTA filepaths to analyze. Make sure to have the FASTA files in the same directory as the executable or provide the correct relative/absolute path.
-	// make sure to use double backslashes \\ if you're on Windows or single forward slashes / for Unix-based systems in the file paths.
-
-	//std::string  wild_type = read_fasta("insert wild type DNA filepath here");
-	//std::string  variant = read_fasta("insert variant or DNA of interest filepath here");
-
-	std::cout << "\nAttempting to load sequences from FASTA files..." << std::endl;
 	std::string wild_type = read_fasta("C:\\Users\\Gabriel\\Desktop\\code\\my-shit\\Smith Waterman Alignment\\wt.fasta.txt");
 	std::string variant = read_fasta("C:\\Users\\Gabriel\\Desktop\\code\\my-shit\\Smith Waterman Alignment\\variant.fasta.txt");
 
 	if (wild_type.length() > 0 && variant.length() > 0) {
-		std::cout << "\nFiles loaded successfully! Running Affine Smith-Waterman..." << std::endl;
-		int file_score = smith_waterman_alg(wild_type, variant);
-		std::cout << "--- FASTA File Test Complete! Score: " << file_score << " ---" << std::endl;
+		std::cout << "Files loaded! Running Affine Smith-Waterman...\n" << std::endl;
+		smith_waterman_alg(wild_type, variant);
 	}
-	
 	else {
-		std::cerr << "--- FASTA File Test Skipped: Could not find or read the files. ---" << std::endl;
-		std::cerr << "(Check your Visual Studio Working Directory settings!)" << std::endl;
+		std::cerr << "Integration Test Skipped: Could not find the files." << std::endl;
 	}
+}
+
+int main(int argc, char* argv[]) {
+	// developer testing bloc
+	if (argc == 1) {
+		std::cout << "Starting Developer Test Suite...\n" << std::endl;
+		run_unit_tests();
+		run_integration_tests();
+		return 0;
+	}
+
+	// MODE 2: Web API Mode (Exactly 2 files passed in)
+	if (argc == 3) {
+		std::string wild_type = read_fasta(argv[1]);
+		std::string variant = read_fasta(argv[2]);
+
+		if (wild_type.length() == 0 || variant.length() == 0) {
+			std::cerr << "ERROR: One or both files were empty or unreadable." << std::endl;
+			return 1;
+		}
+
+		// 1. Start the clock!
+		auto start_time = std::chrono::high_resolution_clock::now();
+
+		// 2. Run the engine silently for the web app
+		smith_waterman_alg(wild_type, variant);
+
+		// 3. Stop the clock!
+		auto end_time = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double, std::milli> elapsed = end_time - start_time;
+
+		// 4. Calculate the matrix payload
+		long long matrix_cells = (long long)wild_type.length() * (long long)variant.length();
+
+		// 5. Print the Flex Stats
+		std::cout << "\n================ ENGINE STATS ================\n";
+		std::cout << "Sequence 1 Length : " << wild_type.length() << " bp\n";
+		std::cout << "Sequence 2 Length : " << variant.length() << " bp\n";
+		std::cout << "Matrix Cells Calc : " << matrix_cells << "\n";
+		std::cout << "Execution Time    : " << elapsed.count() << " ms\n";
+		std::cout << "==============================================\n";
+		return 0;
+	}
+	// ERROR CATCHER: Wrong number of arguments
+	std::cerr << "ERROR: Invalid usage." << std::endl;
+	std::cerr << "Usage for Web API: aligner.exe <reference.fasta> <variant.fasta>" << std::endl;
+	std::cerr << "Usage for Dev Test: aligner.exe (with no arguments)" << std::endl;
+	return 1;
+
+
 
 	return 0;
 }
-	
 
-	
+
