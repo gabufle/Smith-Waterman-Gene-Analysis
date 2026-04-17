@@ -207,39 +207,49 @@ int smith_waterman_alg(std::string seq1, std::string seq2, SWParams params = SWP
 }
 int main() {
 
+	std::cout << "Starting automated test suite...\n" << std::endl;
+
+	//assert(smith_waterman_alg("CGTGAATTCG", "ACTGAATTCC") == 21);
+	//std::cout << "Baseline Sequence test passed successfully!" << std::endl;
+
+	//assert(smith_waterman_alg("ATCG", "ATCG") == 12);
+	//std::cout << "Identical Sequence test passed successfully!" << std::endl;
+
+	//assert(smith_waterman_alg("AAAA", "TTTT") == 0);
+	//std::cout << "Zero Floor test passed successfully!" << std::endl;
+
+	//std::string wild_type = "GTCCGATGCTAGCTAGCTAGCATCGATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGATGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGA";
+	//std::string variant = "TTGACGTAAAGCTAGCTAGCATCGATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGATGCCATTGTAATGGGCCGCTGAAAGGGTTAAAGAT";
+
+	//int stress_score = smith_waterman_alg(wild_type, variant);
+	//std::cout << "massive memory leak test passed. Score: " << stress_score << std::endl;
+
+	//std::cout << "All tests passed successfully!" << std::endl;
+
+
 	// HERE is where you would add the FASTA filepaths to analyze. Make sure to have the FASTA files in the same directory as the executable or provide the correct relative/absolute path.
 	// make sure to use double backslashes \\ if you're on Windows or single forward slashes / for Unix-based systems in the file paths.
-	//std::string << wild_type = read_fasta("insert wild type DNA filepath here");
-	//std::string << variant = read_fasta("insert variant or DNA of interest filepath here");
 
-	//std::cout << "\nAttempting to load sequences from FASTA files..." << std::endl;
-	//std::string wild_type = read_fasta("wild_type.fasta");
-	//std::string variant = read_fasta("variant.fasta");
+	//std::string  wild_type = read_fasta("insert wild type DNA filepath here");
+	//std::string  variant = read_fasta("insert variant or DNA of interest filepath here");
 
-	//if (wild_type.length() > 0 && variant.length() > 0) {
-		//int file_score = smith_waterman_alg(wild_type, variant);
-	//	std::cout << "--- Test 4 Passed: File IO Successful ---" << std::endl;
-	//}
-	//else {
-	//	std::cout << "--- Test 4 Skipped: Files not found ---" << std::endl;
-	//}
+	std::cout << "\nAttempting to load sequences from FASTA files..." << std::endl;
+	std::string wild_type = read_fasta("C:\\Users\\Gabriel\\Desktop\\code\\my-shit\\Smith Waterman Alignment\\wt.fasta.txt");
+	std::string variant = read_fasta("C:\\Users\\Gabriel\\Desktop\\code\\my-shit\\Smith Waterman Alignment\\variant.fasta.txt");
 
-	assert(smith_waterman_alg("CGTGAATTCG", "ACTGAATTCC") == 21);
-	std::cout << "Baseline Sequence test passed successfully!" << std::endl;
+	if (wild_type.length() > 0 && variant.length() > 0) {
+		std::cout << "\nFiles loaded successfully! Running Affine Smith-Waterman..." << std::endl;
+		int file_score = smith_waterman_alg(wild_type, variant);
+		std::cout << "--- FASTA File Test Complete! Score: " << file_score << " ---" << std::endl;
+	}
+	
+	else {
+		std::cerr << "--- FASTA File Test Skipped: Could not find or read the files. ---" << std::endl;
+		std::cerr << "(Check your Visual Studio Working Directory settings!)" << std::endl;
+	}
 
-	assert(smith_waterman_alg("ATCG", "ATCG") == 12); 
-	std::cout << "Identical Sequence test passed successfully!" << std::endl;
-
-	assert(smith_waterman_alg("AAAA", "TTTT") == 0);
-	std::cout << "Zero Floor test passed successfully!" << std::endl;
-
-	std::string wild_type = "GTCCGATGCTAGCTAGCTAGCATCGATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGATGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGA";
-	std::string variant = "TTGACGTAAAGCTAGCTAGCATCGATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGACTAGCTAGCTAGCATCGATCGATCGATGCCATTGTAATGGGCCGCTGAAAGGGTTAAAGAT";
-
-	int stress_score = smith_waterman_alg(wild_type, variant);
-	std::cout << "massive memory leak test passed. Score: " << stress_score << std::endl; 
-
-	std::cout << "All tests passed successfully!" << std::endl;
-
-	return 0; 
+	return 0;
 }
+	
+
+	
