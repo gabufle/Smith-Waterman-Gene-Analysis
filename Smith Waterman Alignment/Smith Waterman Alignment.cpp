@@ -1,11 +1,17 @@
-// Smith Waterman Alignment.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
 #include <string>
 #include <algorithm>
 #include <cassert>
 #include <fstream>
+
+struct SWParams {
+	int match = 3;
+	int mismatch = -3;
+	int gap_open = -4;
+	int gap_extend = -1;
+};
+
+
 
 std::string read_fasta(std::string filepath) {
 	std::ifstream file(filepath);
@@ -35,7 +41,7 @@ std::string read_fasta(std::string filepath) {
 
 
 
-int smith_waterman_alg(std::string seq1, std::string seq2) {
+int smith_waterman_alg(std::string seq1, std::string seq2, SWParams params = SWParams{}) {
 
 	int max_i = 0; 
 	int max_j = 0; 
@@ -43,21 +49,25 @@ int smith_waterman_alg(std::string seq1, std::string seq2) {
 	int cols = seq1.length() + 1;
 	int rows = seq2.length() + 1;
 
-	int match_score = 3;
-	int mismatch_pen = -3;
-	int gap_pen = -2;
-
 	//memory alocation 
-	int** matrix = new int* [rows];
+	int** M = new int* [rows];
+	int** X = new int* [rows];
+	int** Y = new int* [rows];
 
 	for (int i = 0; i < rows; i++) {
-		matrix[i] = new int[cols];
+		M[i] = new int[cols];
+		X[i] = new int[cols];
+		Y[i] = new int[cols];
 	}
 
 	//initialize 
+	const int NEG_INF = -1000000;
+
 	for (int i = 0; i < rows; i++) {
 		for (int j = 0; j < cols; j++) {
-			matrix[i][j] = 0;
+			M[i][j] = 0;
+			X[i][j] = (j == 0) ? NEG_INF : 0;
+			Y[i][j] = (i == 0) ? NEG_INF : 0;
 		}
 	}
 
@@ -72,30 +82,22 @@ int smith_waterman_alg(std::string seq1, std::string seq2) {
 	for (int i = 1; i < rows; i++) {
 		for (int j = 1; j < cols; j++) {
 
-			//Option 1: Diagonal match or mismatch
-			int diagonal_score = matrix[i - 1][j - 1];
-			if (seq2[i - 1] == seq1[j - 1]) {
-				diagonal_score += match_score;
-			}
-			else {
-				diagonal_score += mismatch_pen;
-			}
+			//Diagonal match or mismatch
+			int sub = (seq2[i - 1] == seq1[j - 1]) ? params.match : params.mismatch;
+			M[i][j] = std::max(0, std::max({ M[i - 1][j - 1], X[i - 1][j - 1], Y[i - 1][j - 1] }) + sub);
 
-			// options 2 and 3: Gap conditions
-			int up_score = matrix[i - 1][j] + gap_pen;
-			int left_score = matrix[i][j - 1] + gap_pen;
+			//Gap condition: between X and M matrices
+			X[i][j] = std::max(0, std::max({M[i][j - 1] + params.gap_open, X[i][j - 1] + params.gap_extend}));
 
-			// highest score
-			matrix[i][j] = std::max({ 0, diagonal_score, up_score, left_score });
+			//Gap condition: between Y and M matrices
+			Y[i][j] = std::max(0, std::max({M[i - 1][j] + params.gap_open, Y[i - 1][j] + params.gap_extend}));
 
-			//Highest total score overall grid
-			if (matrix[i][j] > max_score) {
-				max_score = matrix[i][j];
+			int best = std::max({ M[i][j], X[i][j], Y[i][j] });
+			if (best > max_score) {
+				max_score = best;
 				max_i = i;
 				max_j = j;
-				//saves row and column of max score 
 			}
-
 		}
 	}
 	std::cout << "The highest local alignment score is: " << max_score << std::endl;
@@ -104,64 +106,101 @@ int smith_waterman_alg(std::string seq1, std::string seq2) {
 	// --- PHASE 3: THE TRACEBACK ---
 	std::string align1 = "";
 	std::string align2 = "";
+	std::string match_line = "";
 
 	int i = max_i;
 	int j = max_j;
 
+	// Figure out which matrix the max score came from
+	enum State { IN_M, IN_X, IN_Y };
+
+	State current_state;
+	if (M[max_i][max_j] >= X[max_i][max_j] && M[max_i][max_j] >= Y[max_i][max_j])
+		current_state = IN_M;
+	else if (X[max_i][max_j] >= Y[max_i][max_j])
+		current_state = IN_X;
+	else
+		current_state = IN_Y;
+
+
 	// Walk backward until we hit a 0
-	while (matrix[i][j] > 0) {
-		int current_score = matrix[i][j];
+	while (i > 0 && j > 0 && std::max({ M[i][j], X[i][j], Y[i][j] }) > 0) {
 
-		// Look at the neighbors
-		int diagonal_score = matrix[i - 1][j - 1];
-		int up_score = matrix[i - 1][j];
-		int left_score = matrix[i][j - 1];
+		if (current_state == IN_M) {
+			// Came diagonally — always a match/mismatch
+			align1 += seq1[j - 1];
+			align2 += seq2[i - 1];
 
-		// Calculate what the diagonal math would have been
-		int diag_points;
-		if (seq2[i - 1] == seq1[j - 1]) {
-			diag_points = match_score;
-		}
-		else {
-			diag_points = mismatch_pen; 
-		}
+			// Bring back the visual match logic!
+			if (seq1[j - 1] == seq2[i - 1]) {
+				match_line += "|";
+			}
+			else {
+				match_line += "*";
+			}
 
-		// REVERSE MATH: Which path gave us the current score?
-		if (current_score == diagonal_score + diag_points) {
-			align1 += seq1[j - 1]; // Grab DNA letter
-			align2 += seq2[i - 1]; // Grab DNA letter
-			i--; j--;              // Move diagonally up-left
+			// Figure out where M[i][j] came from
+			int sub = (seq2[i - 1] == seq1[j - 1]) ? params.match : params.mismatch;
+			int prev_best = M[i][j] - sub; // what the score was before adding sub
+
+			if (prev_best == M[i - 1][j - 1])      current_state = IN_M;
+			else if (prev_best == X[i - 1][j - 1]) current_state = IN_X;
+			else                               current_state = IN_Y;
+
+			i--; j--;
+
 		}
-		else if (current_score == left_score + gap_pen) { 
-			align1 += seq1[j - 1]; // Grab DNA letter
-			align2 += "-";         // Insert gap
-			j--;                   // Move left
+		else if (current_state == IN_X) {
+			// In X means gap in seq2 — consuming seq1, moving left
+			align1 += seq1[j - 1];
+			align2 += "-";
+			match_line += " ";
+
+			// Did we open a fresh gap from M, or extend an existing X gap?
+			if (M[i][j - 1] + params.gap_open >= X[i][j - 1] + params.gap_extend)
+				current_state = IN_M;
+			else
+				current_state = IN_X;
+
+			j--;
+
 		}
-		else if (current_score == up_score + gap_pen) {   
-			align1 += "-";         // Insert gap
-			align2 += seq2[i - 1]; // Grab DNA letter
-			i--;                   // Move up
-		}
-		else {
-			break; // Safety net in case the math ever breaks
+		else { // IN_Y
+			// In Y means gap in seq1 — consuming seq2, moving up
+			align1 += "-";
+			align2 += seq2[i - 1];
+			match_line += " "; // Add space for gaps
+
+			// Did we open a fresh gap from M, or extend an existing Y gap?
+			if (M[i - 1][j] + params.gap_open >= Y[i - 1][j] + params.gap_extend)
+				current_state = IN_M;
+			else
+				current_state = IN_Y;
+
+			i--;
 		}
 	}
 
-	// Since we walked backwards, the strings are backwards. Reverse them!
 	std::reverse(align1.begin(), align1.end());
+	std::reverse(match_line.begin(), match_line.end()); // Reverse the new line
 	std::reverse(align2.begin(), align2.end());
 
 	std::cout << "\nOptimal Local Alignment Found:" << std::endl;
-	std::cout << align1 << std::endl;
-	std::cout << align2 << "\n" << std::endl;
+	std::cout << "WT:  " << align1 << std::endl;
+	std::cout << "     " << match_line << std::endl;
+	std::cout << "VAR: " << align2 << "\n" << std::endl;
 
 
 
 	//memory cleanup
 	for (int i = 0; i < rows; i++) {
-		delete[] matrix[i];
+		delete[] M[i];
+		delete[] X[i];
+		delete[] Y[i];
 	}
-	delete[] matrix;
+	delete[] M;
+	delete[] X;
+	delete[] Y;;
 
 	return max_score;
 
@@ -185,7 +224,7 @@ int main() {
 	//	std::cout << "--- Test 4 Skipped: Files not found ---" << std::endl;
 	//}
 
-	assert(smith_waterman_alg("CGTGAATTCG", "ACTGAATTCC") == 22);
+	assert(smith_waterman_alg("CGTGAATTCG", "ACTGAATTCC") == 21);
 	std::cout << "Baseline Sequence test passed successfully!" << std::endl;
 
 	assert(smith_waterman_alg("ATCG", "ATCG") == 12); 
