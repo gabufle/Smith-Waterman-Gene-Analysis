@@ -49,3 +49,6 @@ Release/
 # Python / Streamlit Junk
 __pycache__/
 *.pyc
+
+# Ignore massive test datasets
+*pax7.fasta
