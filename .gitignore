@@ -1,54 +1,63 @@
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-# Visual Studio specific files
+# Visual Studio
 .vs/
-Debug/
-Release/
-x64/
-x86/
+*.suo
 *.user
+*.vcxproj.user
 
-# macOS specific files
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Visual Studio / C++ Junk
-.vs/
+# Build outputs
 x64/
 Debug/
 Release/
+*/x64/
+*/Debug/
+*/Release/
+
+# Compiled binaries
 *.exe
+*.dll
+*.lib
 *.obj
 *.pdb
-*.sln
+*.ilk
+*.idb
+*.exp
 
-# Python / Streamlit Junk
+# Build logs
+*.log
+*.tlog
+*.lastbuildstate
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.pyw
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.venv/
+venv/
+env/
 
-# Ignore massive test datasets
-*pax7.fasta
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+temp_*.fasta
+
+# Test outputs
+test-results/
+coverage/
